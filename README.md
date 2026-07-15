@@ -29,11 +29,6 @@ Negotiated TLS1.3 group: X25519MLKEM768
 Classical clients (curl, standard browsers) fall back gracefully to X25519,
 preserving compatibility with existing systems during migration.
 
-## Simulation Results
-See [docs/SIMULATION-RESULTS.md](docs/SIMULATION-RESULTS.md) for full
-scenario walkthroughs and observed risk scores (normal behavior,
-credential stuffing, account takeover, off-hours access).
-
 ## Real-World Deployment Path
 - Identity extraction from the bank's real auth system (session/JWT/SSO)
   replacing the test `X-User-Id` header
