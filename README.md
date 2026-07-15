@@ -20,7 +20,7 @@ systems being protected.
   and credential stuffing via a rule engine and continuous baselining.
 
 ## Architecture
-![Architecture Diagram](docs/architecture-diagram.png)
+![Architecture Diagram](images/Architecture.jpeg)
 
 ## Quantum-Safe Verification
 Verified using OpenSSL 3.5 against the live Q-PASS gateway:
