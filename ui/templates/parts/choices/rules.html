@@ -1,0 +1,15 @@
+<div id="rule-selectors" class="settings-page choices-selector">
+    <div class="field">
+        <div class="control">
+            <div class="selector">
+                <select class="input" name="version" multiple>
+                    <option placeholder disabled>{{ @users_rules_search_placeholder }}</option>
+                    <repeat group="{{ @RULES }}" value="{{ @record }}">
+                        <option value="{{ @record['uid'] }}" {{ isset(@DEFAULT_RULE) && @DEFAULT_RULE === @record['uid'] ? 'selected' : '' }}
+                            >{{ @record['uid'] }}|{{ sentrion('assets')->rules->getRuleClass(@record['value'], @record['broken']) }}|{{ @record['name'] }}</option>
+                    </repeat>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

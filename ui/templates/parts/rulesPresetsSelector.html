@@ -1,0 +1,9 @@
+<div class="selector">
+    <select class="input" name="rules-preset" id="rules-preset" data-initial-value={{ @BASE_PRESET_ID }}>
+        <optgroup label="Preset">
+            <repeat group="{{ @RULES_PRESETS }}" key="{{ @PRESET_ID }}" value="{{ @PRESET }}">
+                <option value="{{ @PRESET_ID }}" {{ @BASE_PRESET_ID === @PRESET_ID ? 'selected' : '' }}>{{ @PRESET.description }}</option>
+            </repeat>
+        </optgroup>
+    </select>
+</div>

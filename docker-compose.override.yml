@@ -1,0 +1,19 @@
+services:
+  legacy-backend:
+    build: ./qpass/mock-backend
+    container_name: legacy-backend
+    restart: unless-stopped
+
+  qpass:
+    build: ./qpass
+    container_name: qpass
+    restart: unless-stopped
+    depends_on:
+      - app
+      - legacy-backend
+    environment:
+      BACKEND_URL: http://legacy-backend:8080
+      SENTRION_EVENT_URL: http://app:80/sensor/
+      SENTRION_API_KEY: "${SENTRION_API_KEY}"
+    ports:
+      - "8443:8443"

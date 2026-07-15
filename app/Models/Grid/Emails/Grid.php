@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * sentrion ~ open-source security framework
+ * Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ *
+ * Licensed under GNU Affero General Public License version 3 of the or any later version.
+ * For full copyright and license information, please see the LICENSE
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ * @license       https://opensource.org/licenses/AGPL-3.0 AGPL License
+ * @link          https://www.sentrion.com Sentrion(tm)
+ */
+
+declare(strict_types=1);
+
+namespace Sentrion\Models\Grid\Emails;
+
+class Grid extends \Sentrion\Models\Grid\Base\Grid {
+    public function getEmailsByUserId(int $userId, int $apiKey): array {
+        $params = [':account_id' => $userId];
+
+        return $this->getGrid($apiKey, $this->idsModel->getEmailsIdsByUserId(), $params);
+    }
+
+    protected function calculateCustomParams(array &$result): void {
+        $result = sentrion('utils')->enrichment->calculateEmailReputation($result);
+    }
+
+    protected function convertTimeToUserTimezone(array &$result): void {
+        $fields = ['lastseen'];
+
+        $result = sentrion('utils')->timezones->translateTimezones($result, $fields);
+    }
+}

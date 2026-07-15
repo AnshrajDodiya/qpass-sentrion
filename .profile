@@ -1,0 +1,12 @@
+chmod 740 composer.json
+chmod 740 composer.lock
+chmod -R 755 tmp
+chmod -R 740 config
+chmod -R 755 assets
+chmod -R 755 assets/rules
+chmod -R 755 assets/rules/core
+chmod -R 755 assets/rules/custom
+chmod -R 755 assets/logs
+chmod -R 755 assets/lists
+chmod -R 755 assets/dashboard
+chmod -R 755 assets/pages

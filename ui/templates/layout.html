@@ -1,0 +1,9 @@
+<check if="{{ isset(@HTML_FILE) }}">
+    {~
+        $templatePath = 'templates/' . (isset($INTERNAL_PAGE) && $INTERNAL_PAGE ? 'internalTemplate.html' : 'externalTemplate.html');
+        $destHtml = (isset($USE_TEMPLATING_SUBDIR) && $USE_TEMPLATING_SUBDIR ? 'templates/pages/' : '') . $HTML_FILE;
+
+        sentrion('log')->debug('templating file %s with %s.', $destHtml, $templatePath);
+    ~}
+    <include href="{{ @templatePath }}" />
+</check>

@@ -1,0 +1,47 @@
+{
+    "name": "sentrion",
+    "description": "Open security framework. Understand, monitor, and protect your application from cyber threats, account takeovers, and abuse.",
+    "website": "https://www.sentrion.com",
+    "repository": "https://github.com/sentriontechnologies/sentrion",
+    "logo": "https://www.sentrion.com/sentrion-logo-public.png",
+    "keywords": [
+        "sentrion",
+        "fraud-detection",
+        "audit-trail",
+        "analytics",
+        "monitoring",
+        "bot-detection",
+        "antispam",
+        "application-monitoring"
+    ],
+    "success_url": "/install/index.php?mode=schema",
+    "addons": [
+        {
+            "plan": "heroku-postgresql",
+            "options": {
+                "version": "15"
+            }
+        },
+        {
+            "plan": "scheduler"
+        }
+    ],
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "basic"
+        }
+    },
+    "buildpacks": [
+        {
+            "url": "heroku/php"
+        }
+    ],
+    "env": {
+        "FORCE_HTTPS": {
+            "description": "Secure HTTP for SITE variable",
+            "required": true,
+            "value": "True"
+        }
+    }
+}

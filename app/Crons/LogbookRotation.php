@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * sentrion ~ open-source security framework
+ * Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ *
+ * Licensed under GNU Affero General Public License version 3 of the or any later version.
+ * For full copyright and license information, please see the LICENSE
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ * @license       https://opensource.org/licenses/AGPL-3.0 AGPL License
+ * @link          https://www.sentrion.com Sentrion(tm)
+ */
+
+declare(strict_types=1);
+
+namespace Sentrion\Crons;
+
+class LogbookRotation extends Base {
+    public function process(): void {
+        $this->addLog('Start logbook rotation.');
+
+        $keys = sentrion('models')->apiKeys->getAllApiKeyIds();
+        // rotate events for unauthorized requests
+        $keys[] = ['id' => null];
+
+        $cnt = 0;
+        foreach ($keys as $key) {
+            $cnt += sentrion('models')->logbook->rotateRequests($key['id']);
+        }
+
+        $this->addLog(sprintf('Deleted %s events for %s keys in logbook.', $cnt, count($keys)));
+    }
+}

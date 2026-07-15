@@ -1,0 +1,117 @@
+<?php
+
+/**
+ * sentrion ~ open-source security framework
+ * Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ *
+ * Licensed under GNU Affero General Public License version 3 of the or any later version.
+ * For full copyright and license information, please see the LICENSE
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ * @license       https://opensource.org/licenses/AGPL-3.0 AGPL License
+ * @link          https://www.sentrion.com Sentrion(tm)
+ */
+
+declare(strict_types=1);
+
+namespace Sentrion\Models;
+
+class Updates extends \Sentrion\Models\Base {
+    protected string $tableName = 'dshb_updates';
+
+    public function __construct() {
+        sentrion('utils')->database->initConnect(false);
+
+        $this->createIfNotExists();
+    }
+
+    public function checkDb(string $service, array $updatesList): bool {
+        $applied = false;
+        $database = $this->getDatabaseConnection();
+        try {
+            foreach ($updatesList as $migration) {
+                if (!$migration::isApplied($this)) {
+                    $timer = sentrion('request')->setTimer();
+                    $database->begin();
+                    $this->addStub($migration::$version, $service);
+                    $migration::apply($database);
+                    $this->addCompleted($migration::$version, $service);
+                    $database->commit();
+                    $applied = true;
+                    sentrion('log')->info('applied migration %s %s in %f', $migration::$version, $service, sentrion('request')->getTimer($timer));
+                }
+            }
+        } catch (\Exception $e) {
+            $database->rollback();
+            sentrion('log')->error('failed applying migration, rolling back: %s.', $e->getMessage());
+            throw $e;
+        }
+
+        return $applied;
+    }
+
+    public function isApplied(string $version, string $name): bool {
+        $params = [
+            ':version'  => $version,
+            ':service'  => $name,
+        ];
+
+        $query = 'SELECT 1 FROM dshb_updates WHERE version = :version AND (service = :service OR service = :service || \'_processing\') LIMIT 1';
+
+        $results = $this->execQuery($query, $params);
+
+        return (bool) count($results);
+    }
+
+    private function addStub(string $version, string $name): void {
+        $params = [
+            ':version'  => $version,
+            ':service'  => $name . '_processing',
+        ];
+
+        $query = 'INSERT INTO dshb_updates (service, version) VALUES (:service, :version)';
+
+        $this->execQuery($query, $params);
+    }
+
+    private function addCompleted(string $version, string $name): void {
+        $params = [
+            ':version'  => $version,
+            ':service'  => $name,
+        ];
+
+        $query = 'UPDATE dshb_updates set service = :service where version = :version AND service = :service || \'_processing\'';
+
+        $this->execQuery($query, $params);
+    }
+
+    private function createIfNotExists(): void {
+        if ($this->tableExists()) {
+            return;
+        }
+
+        $queries = [
+            ('CREATE SEQUENCE IF NOT EXISTS dshb_updates_id_seq
+                AS BIGINT
+                START WITH 1
+                INCREMENT BY 1
+                NO MINVALUE
+                NO MAXVALUE
+                CACHE 1'),
+            ('CREATE TABLE IF NOT EXISTS dshb_updates (
+                id bigint NOT NULL DEFAULT nextval(\'dshb_updates_id_seq\'::regclass),
+                service varchar(30),
+                version varchar(30),
+                created timestamp without time zone DEFAULT now() NOT NULL
+            )'),
+            'ALTER SEQUENCE dshb_updates_id_seq OWNED BY dshb_updates.id',
+            'ALTER TABLE ONLY dshb_updates ADD CONSTRAINT dshb_updates_service_version_key UNIQUE (service, version)',
+            'ALTER TABLE ONLY dshb_updates ADD CONSTRAINT dshb_updates_id_pkey PRIMARY KEY (id)',
+        ];
+
+        foreach ($queries as $query) {
+            $this->execQuery($query, null);
+        }
+    }
+}

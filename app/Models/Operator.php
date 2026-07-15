@@ -1,0 +1,370 @@
+<?php
+
+/**
+ * sentrion ~ open-source security framework
+ * Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ *
+ * Licensed under GNU Affero General Public License version 3 of the or any later version.
+ * For full copyright and license information, please see the LICENSE
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Sentrion Technologies Sàrl (https://www.sentrion.com)
+ * @license       https://opensource.org/licenses/AGPL-3.0 AGPL License
+ * @link          https://www.sentrion.com Sentrion(tm)
+ */
+
+declare(strict_types=1);
+
+namespace Sentrion\Models;
+
+class Operator extends \Sentrion\Models\Base {
+    protected string $tableName = 'dshb_operators';
+
+    public function insertRecord(?string $password, string $email, string $timezone): int {
+        $params = [
+            ':password' => $password ? sentrion('utils')->access->hashPassword($password) : $password,
+            ':email'    => $email,
+            ':timezone' => $timezone,
+            ':active'   => 1,
+        ];
+
+        $query = (
+            'INSERT INTO dshb_operators (
+                password, email, timezone, is_active
+            ) VALUES (
+                :password, :email, :timezone, :active
+            ) RETURNING id'
+        );
+
+        $results = $this->execQuery($query, $params);
+
+        return $results[0]['id'];
+    }
+
+    public function updatePassword(string $password, int $operatorId): void {
+        $params = [
+            ':password'     => sentrion('utils')->access->hashPassword($password),
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                password = :password
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function updateEmail(string $email, int $operatorId): void {
+        $params = [
+            ':email'        => $email,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                email = :email
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function updateTimezone(string $timezone, int $operatorId): void {
+        $params = [
+            ':timezone'     => $timezone,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                timezone = :timezone
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function updateNotificationPreferences(string $reminder, int $operatorId): void {
+        $params = [
+            ':reminder'     => $reminder,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                unreviewed_items_reminder_freq = :reminder
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function updateReviewedQueueCnt(int $cnt, int $operatorId): void {
+        $params = [
+            ':cnt'          => $cnt,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                review_queue_cnt = :cnt,
+                review_queue_updated_at = NOW()
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function updateBlacklistUsersCnt(int $cnt, int $operatorId): void {
+        $params = [
+            ':cnt'          => $cnt,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                blacklist_users_cnt = :cnt
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function updateLastEventTime(string $timestamp, int $operatorId): void {
+        $params = [
+            ':timestamp'    => $timestamp,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                last_event_time = :timestamp
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function closeAccount(int $operatorId): void {
+        $params = [
+            ':closed'       => 1,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                is_closed = :closed
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function deleteAccount(int $operatorId): void {
+        $params = [
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'DELETE FROM dshb_operators
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function removeData(int $operatorId): void {
+        $params = [
+            ':operator_id' => $operatorId,
+        ];
+
+        # firstly delete all nested data to not break the cascade
+        $queries = [
+            'DELETE FROM event
+            WHERE event.key IN (SELECT id FROM dshb_api WHERE creator = :operator_id);',
+            'DELETE FROM event_account
+            WHERE event_account.key IN (SELECT id FROM dshb_api WHERE creator = :operator_id);',
+            'DELETE FROM event_ip
+            WHERE event_ip.key IN (SELECT id FROM dshb_api WHERE creator = :operator_id);',
+            'DELETE FROM event_device
+            WHERE event_device.key IN (SELECT id FROM dshb_api WHERE creator = :operator_id);',
+            'DELETE FROM event_email
+            WHERE event_email.key IN (SELECT id FROM dshb_api WHERE creator = :operator_id);',
+        ];
+
+        $db = $this->getDatabaseConnection();
+        try {
+            $db->begin();
+            $db->exec($queries, array_fill(0, 5, $params));
+
+            $query = 'DELETE FROM dshb_api WHERE creator = :operator_id';
+            $db->exec($query, $params);
+
+            $db->commit();
+        } catch (\Exception $e) {
+            $db->rollback();
+            sentrion('log')->error('failed to delete operator: %s.', $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function activateByOperatorId(int $operatorId): void {
+        $params = [
+            ':active'       => 1,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'UPDATE dshb_operators
+            SET
+                is_active = :active
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $this->execQuery($query, $params);
+    }
+
+    public function getByEmail(string $email): array {
+        $params = [
+            ':email'  => $email,
+        ];
+
+        $query = (
+            'SELECT
+                id
+            FROM
+                dshb_operators
+            WHERE
+                LOWER(dshb_operators.email) = LOWER(:email)'
+        );
+
+        return $this->execQuery($query, $params);
+    }
+
+    public function getActivatedByEmail(string $email): ?int {
+        $params = [
+            ':email'    => $email,
+            ':active'   => 1,
+            ':closed'   => 0,
+        ];
+
+        $query = (
+            'SELECT
+                id
+            FROM
+                dshb_operators
+            WHERE
+                LOWER(dshb_operators.email) = LOWER(:email) AND
+                dshb_operators.is_active = :active AND
+                dshb_operators.is_closed = :closed'
+        );
+
+        $results = $this->execQuery($query, $params);
+
+        return $results[0]['id'] ?? null;
+    }
+
+    public function getOperatorById(int $operatorId): array {
+        $params = [
+            ':closed'       => 0,
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'SELECT
+                id,
+                email,
+                password,
+                firstname,
+                lastname,
+                activation_key,
+                timezone,
+                review_queue_cnt,
+                review_queue_updated_at,
+                unreviewed_items_reminder_freq,
+                last_event_time,
+                blacklist_users_cnt
+            FROM
+                dshb_operators
+            WHERE
+                dshb_operators.id = :operator_id AND
+                dshb_operators.is_closed = :closed'
+        );
+
+        $results = $this->execQuery($query, $params);
+
+        return $results[0] ?? [];
+    }
+
+    public function verifyPassword(string $password, int $operatorId): bool {
+        $params = [
+            ':operator_id'  => $operatorId,
+        ];
+
+        $query = (
+            'SELECT
+                password
+            FROM
+                dshb_operators
+            WHERE
+                dshb_operators.id = :operator_id'
+        );
+
+        $results = $this->execQuery($query, $params);
+
+        $operatorPassword = $results[0]['password'] ?? null;
+
+        if (!$results || !$operatorPassword) {
+            return false;
+        }
+
+        return sentrion('utils')->access->verifyPassword($password, $operatorPassword);
+    }
+
+    public function getAll(): array {
+        $params = [
+            ':reserved_ids_limit'    => sentrion('utils')->constants->RESERVED_OPERATOR_IDS,
+        ];
+
+        $query = (
+            'SELECT
+                dshb_operators.id,
+                email,
+                firstname,
+                lastname,
+                last_event_time,
+                review_queue_cnt,
+                json_agg(dshb_operators_roles.role) AS roles
+            FROM
+                dshb_operators
+            LEFT JOIN dshb_operators_roles
+            ON dshb_operators_roles.operator = dshb_operators.id
+            WHERE
+                dshb_operators.id > :reserved_ids_limit
+            GROUP BY dshb_operators.id
+            ORDER BY email ASC'
+        );
+
+        return $this->execQuery($query, $params);
+    }
+}

@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15
+    container_name: sentrion-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sentrion
+      POSTGRES_USER: sentrion
+      POSTGRES_PASSWORD: sentrion
+    volumes:
+      - sentrion_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentrion -d sentrion"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: sentrion-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8585:80"
+    volumes:
+      - sentrion_config:/var/www/html/config/local
+      - sentrion_tmp:/var/www/html/tmp
+      - sentrion_assets:/var/www/html/assets
+
+volumes:
+  sentrion_pgdata:
+  sentrion_config:
+  sentrion_tmp:
+  sentrion_assets:

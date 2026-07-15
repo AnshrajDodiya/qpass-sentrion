@@ -1,0 +1,14 @@
+<div class="column-login">
+    <check if="{{ isset(@ERROR_MESSAGE) }}">
+        <true>
+            <p class="warning-text">{{ @ERROR_MESSAGE }}</p>
+        </true>
+    </check>
+    <div class="card">
+        <div class="card-panel">
+            <div class="content">
+                <include href="templates/parts/forms/loginForm.html" />
+            </div>
+        </div>
+    </div>
+</div>

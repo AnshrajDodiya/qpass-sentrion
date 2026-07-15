@@ -1,0 +1,66 @@
+{~
+    $fraud = $USER['fraud'] ? 'true' : ($USER['fraud'] === false ? 'false' : null);
+~}
+
+<check if="{{ @USER.fraud !== null }}">
+    <true>
+        <check if="{{ !@USER.reviewed && @USER.fraud }}">
+            <true>
+                <div class="head-button">
+                    <button class="button is-warning dark-loader"
+                        data-type="add-to-review"
+                        id="add-to-review-button"
+                        type="button">{{ @users_auto_blocked }}</button>
+                </div>
+
+            </true>
+            <false>
+                <div class="head-button"
+                    id="legit-fraud-buttons-block"
+                    data-user-id="{{ @USER.userid }}"
+                    data-user-fraud="{{ @fraud }}" >
+                </div>
+            </false>
+        </check>
+    </true>
+    <false>
+        <check if="{{ @USER.added_to_review !== null }}">
+            <true>
+                {~ // b/w button ~}
+                <div class="head-button"
+                    id="legit-fraud-buttons-block"
+                    data-user-id="{{ @USER.userid }}"
+                    data-user-fraud="{{ @fraud }}" >
+                </div>
+            </true>
+            <false>
+                {~ //"add to review" button sets review status, then b/w button shown ~}
+                <div class="head-button">
+                    <button class="button is-warning dark-loader"
+                        data-type="add-to-review"
+                        id="add-to-review-button"
+                        type="button">{{ @users_add_to_review }}</button>
+                </div>
+            </false>
+        </check>
+    </false>
+</check>
+
+{~
+    $scoreUpd = '&minus;';
+
+    if ($USER['score_updated_at']) {
+        try {
+            $date = new DateTime($USER['score_updated_at']);
+            $scoreUpd = 'Last updated: '.$date->format('d/m/Y');
+        } catch (Exception $e) {
+            $scoreUpd = '&minus;';
+        }
+    }
+
+    [$score, $cls] = sentrion('utils')->render->getUserScoreClass($USER['score'], $USER['fraud'], $USER['added_to_review']);
+~}
+
+<h1 class="title grey-title">
+    <span class="ignore-select tooltip score {{ @cls }}" data-score="{{ @USER.score }}" title="{{ @scoreUpd }}">{{ @score | raw }}</span>{{ @title }}<include href="templates/parts/forms/riskScoreButtonForm.html" with="accountid={{@USER.accountid}}"/>
+</h1>
