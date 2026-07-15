@@ -46,7 +46,10 @@ credential stuffing, account takeover, off-hours access).
 ## Setup / Run Instructions
 ```bash
 git clone https://github.com/AnshrajDodiya/qpass-sentrion.git
+#To start Sentrion
 cd qpass-sentrion
+docker compose up -d --build
+#To start Q-Pass
 cd qpass && ./gen-certs.sh && cd ..
 echo "SENTRION_API_KEY=your-key-here" > .env
 docker compose up -d --build
