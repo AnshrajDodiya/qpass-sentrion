@@ -1,3 +1,4 @@
+
 config/config.local.ini
 config/local/config.local.ini
 ui/node_modules
@@ -14,3 +15,36 @@ assets/logs/*
 tmp/*
 !/tmp/index.php
 /.phpunit.cache
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# Editor/IDE
+# .idea/
+# .vscode/
+31f23585d7893c6a6a574c69d7bda02c9331889a
